@@ -7,7 +7,6 @@ Application web 3-tiers complète (Frontend + API Flask + PostgreSQL)
 Projet de déploiement automatisé d'une application web 3-tiers sur Kubernetes (Minikube) utilisant Ansible et Terraform.
 
 **URL finale →** `http://notes.<MINIKUBE_IP>.nip.io`  
-**Tout fonctionne à 100 % – Persistance incluse**
 
 ## Fonctionnalités
 - Liste, Ajout, affichage et suppression de notes en temps réel
@@ -16,8 +15,6 @@ Projet de déploiement automatisé d'une application web 3-tiers sur Kubernetes 
 - Déploiement entièrement automatisé
 
 
-**URL finale →** `http://notes.<MINIKUBE_IP>.nip.io`  
-**Tout fonctionne à 100 % – Persistance incluse**
 
 ## Fonctionnalités
 - Ajout, affichage et suppression de notes en temps réel
