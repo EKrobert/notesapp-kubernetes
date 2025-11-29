@@ -1,0 +1,142 @@
+---
+- name: Setup NotesApp on Minikube
+  hosts: localhost
+  become: yes
+  vars:
+    minikube_ip: ""
+  
+  tasks:
+    - name: Install required packages
+      apt:
+        name:
+          - curl
+          - apt-transport-https
+          - ca-certificates
+          - software-properties-common
+        state: present
+        update_cache: yes
+
+    - name: Install Docker
+      shell: |
+        curl -fsSL https://get.docker.com -o get-docker.sh
+        sh get-docker.sh
+      args:
+        creates: /usr/bin/docker
+
+    - name: Add user to docker group
+      user:
+        name: "{{ ansible_env.SUDO_USER | default(ansible_user_id) }}"
+        groups: docker
+        append: yes
+
+    - name: Install kubectl
+      shell: |
+        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+        install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+      args:
+        creates: /usr/local/bin/kubectl
+
+    - name: Install Minikube
+      shell: |
+        curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+        install minikube-linux-amd64 /usr/local/bin/minikube
+      args:
+        creates: /usr/local/bin/minikube
+
+    - name: Install Terraform
+      shell: |
+        wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+        echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/hashicorp.list
+        apt update && apt install -y terraform
+      args:
+        creates: /usr/bin/terraform
+
+    - name: Start Minikube
+      shell: minikube start --driver=docker --force
+      become_user: "{{ ansible_env.SUDO_USER | default(ansible_user_id) }}"
+      environment:
+        HOME: "/home/{{ ansible_env.SUDO_USER | default(ansible_user_id) }}"
+
+    - name: Install Nginx Ingress Controller (Docker for Mac method)
+      shell: kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.11.2/deploy/static/provider/cloud/deploy.yaml
+      become_user: "{{ ansible_env.SUDO_USER | default(ansible_user_id) }}"
+      environment:
+        HOME: "/home/{{ ansible_env.SUDO_USER | default(ansible_user_id) }}"
+
+    - name: Wait for Ingress Controller to be ready
+      shell: |
+        retries=0
+        until kubectl get pods -n ingress-nginx -l app.kubernetes.io/component=controller -o jsonpath='{.items[0].status.phase}' 2>/dev/null | grep -q "Running"; do
+          if [ $retries -ge 30 ]; then
+            echo "Ingress controller pod did not become ready in time" >&2
+            exit 1
+          fi
+          retries=$((retries+1))
+          echo "Waiting for ingress controller pod to be ready... ($retries)"
+          sleep 10
+        done
+      become_user: "{{ ansible_env.SUDO_USER | default(ansible_user_id) }}"
+      environment:
+        HOME: "/home/{{ ansible_env.SUDO_USER | default(ansible_user_id) }}"
+
+
+    - name: Get Minikube IP
+      shell: minikube ip
+      become_user: "{{ ansible_env.SUDO_USER | default(ansible_user_id) }}"
+      environment:
+        HOME: "/home/{{ ansible_env.SUDO_USER | default(ansible_user_id) }}"
+      register: minikube_ip_output
+
+    - name: Set Minikube IP
+      set_fact:
+        minikube_ip: "{{ minikube_ip_output.stdout }}"
+
+    - name: Build Docker images
+      shell: |
+        eval $(minikube docker-env)
+        docker build -t notes-api:latest ./app/notes-api
+        docker build -t notes-frontend:latest ./app/notes-frontend
+      become_user: "{{ ansible_env.SUDO_USER | default(ansible_user_id) }}"
+      environment:
+        HOME: "/home/{{ ansible_env.SUDO_USER | default(ansible_user_id) }}"
+      args:
+        chdir: "{{ playbook_dir }}/.."
+
+    - name: Apply Terraform
+      shell: |
+        terraform init
+        terraform apply -auto-approve -var="minikube_ip={{ minikube_ip }}"
+      become_user: "{{ ansible_env.SUDO_USER | default(ansible_user_id) }}"
+      environment:
+        HOME: "/home/{{ ansible_env.SUDO_USER | default(ansible_user_id) }}"
+        KUBECONFIG: "/home/{{ ansible_env.SUDO_USER | default(ansible_user_id) }}/.kube/config"
+      args:
+        chdir: "{{ playbook_dir }}/../terraform"
+
+    - name: Display instructions
+      debug:
+        msg: 
+          - "=========================================="
+          - "✅ Déploiement terminé!"
+          - "=========================================="
+          - ""
+          - "🔍 VÉRIFICATIONS:"
+          - "   kubectl get all -n notes-app"
+          - "   kubectl get ingress -n notes-app"
+          - "   kubectl get pods -n notes-app"
+          - ""
+          - "🔥 IMPORTANT - Pour accéder depuis Windows:"
+          - ""
+          - "1️⃣ Dans un NOUVEAU terminal WSL, lancez:"
+          - "   minikube tunnel"
+          - "   (GARDER CE TERMINAL OUVERT)"
+          - ""
+          - "2️⃣ Sur Windows, éditez (en Admin):"
+          - "   C:\\Windows\\System32\\drivers\\etc\\hosts"
+          - "   Ajouter:"
+          - "   127.0.0.1  notes.{{ minikube_ip }}.nip.io"
+          - ""
+          - "3️⃣ Accédez dans Chrome/Edge:"
+          - "   http://notes.{{ minikube_ip }}.nip.io"
+          - ""
+          - "=========================================="

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>NotesApp</title>
+    <style>
+        body { 
+            font-family: Arial; 
+            max-width: 600px; 
+            margin: 50px auto; 
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .input-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        input { 
+            flex: 1;
+            padding: 12px; 
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+        }
+        button { 
+            padding: 12px 24px; 
+            cursor: pointer;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .note { 
+            background: white; 
+            padding: 15px; 
+            margin: 10px 0; 
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .delete-btn {
+            background: #dc3545;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+        .delete-btn:hover {
+            background: #c82333;
+        }
+        .empty-state {
+            text-align: center;
+            color: #999;
+            padding: 40px;
+        }
+    </style>
+</head>
+<body>
+    <h1>📝 NotesApp</h1>
+    
+    <div class="input-container">
+        <input id="noteInput" type="text" placeholder="Nouvelle note..." 
+               onkeypress="if(event.key==='Enter') addNote()">
+        <button onclick="addNote()">➕ Ajouter</button>
+    </div>
+    
+    <div id="notes"></div>
+
+    <script>
+        // const API_URL = 'http://127.0.0.1:5000';
+        const API_URL = '/api';
+        // const API_URL = '';  // ou supprime-la complètement
+        
+        async function loadNotes() {
+            try {
+                const res = await fetch(`${API_URL}/notes`);
+                const notes = await res.json();
+                
+                console.log('Notes:', notes);
+                
+                const notesDiv = document.getElementById('notes');
+                
+                if (notes.length === 0) {
+                    notesDiv.innerHTML = '<div class="empty-state">📭 Aucune note</div>';
+                } else {
+                    notesDiv.innerHTML = notes.map(n => 
+                        `<div class="note">
+                            <span>${escapeHtml(n.note)}</span>
+                            <button class="delete-btn" onclick="deleteNote(${n.id})">🗑️</button>
+                        </div>`
+                    ).join('');
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('❌ Erreur de connexion');
+            }
+        }
+        
+        async function addNote() {
+            const input = document.getElementById('noteInput');
+            const note = input.value.trim();
+            
+            if (!note) {
+                alert('⚠️ Entrez une note');
+                return;
+            }
+            
+            try {
+                await fetch(`${API_URL}/add`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({note})
+                });
+                
+                input.value = '';
+                loadNotes();
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('❌ Erreur');
+            }
+        }
+        
+        async function deleteNote(id) {
+            if (!confirm('Supprimer ?')) return;
+            
+            try {
+                const res = await fetch(`${API_URL}/delete/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (res.ok) {
+                    loadNotes();
+                } else {
+                    alert('❌ Note introuvable');
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('❌ Erreur');
+            }
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        loadNotes();
+    </script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+services:
+  notes-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: notes
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./app/notes-db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d notes"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  notes-api:
+    build: ./app/notes-api
+    environment:
+      DB_HOST: notes-db
+    depends_on:
+      notes-db:
+        condition: service_healthy
+
+  notes-frontend:
+    build: ./app/notes-frontend
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - notes-frontend
+      - notes-api
+
+volumes:
+  postgres_data:

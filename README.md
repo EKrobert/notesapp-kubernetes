@@ -15,16 +15,6 @@ Projet de déploiement automatisé d'une application web 3-tiers sur Kubernetes 
 - Une seule URL publique grâce à **Ingress NGINX + nip.io**
 - Déploiement entièrement automatisé
 
-## Structure du projet
-**Voici ton README.md FINAL, 100 % propre, professionnel, complet et qui va faire un carton auprès de Pr. EL MENDILI.**
-
-Copie-colle exactement ce bloc unique dans ton `README.md` à la racine du projet :
-
-```markdown
-# NotesApp – Déploiement Automatisé sur Kubernetes (Minikube)
-
-**Application web 3-tiers complète (Frontend + API Flask + PostgreSQL)**  
-Déployée automatiquement avec **Ansible + Terraform + Minikube** en **une seule commande**.
 
 **URL finale →** `http://notes.<MINIKUBE_IP>.nip.io`  
 **Tout fonctionne à 100 % – Persistance incluse**
@@ -58,7 +48,7 @@ notesapp-project/
 └── README.md                     # Ce fichier
 ```
 
-## Déploiement automatique (5 à 8 minutes)
+## Déploiement automatique (5 à 10 minutes)
 
 Depuis WSL (Ubuntu), à la racine du projet :
 
@@ -74,11 +64,10 @@ Le playbook fait **TOUT** :
 5. Applique toute l’infrastructure Terraform
 6. Affiche l’URL finale
 
-Quand c’est terminé ouvrez un **nouveau terminal** et lance :
+Quand c’est terminé ouvrez un **nouveau terminal** et lancez :
 
-```bash
-sudo minikube tunnel    # Laisse ouvert
-```
+minikube tunnel    # Laisse ouvert
+
 
 Puis ouvrez votre navigateur Windows :
 
@@ -86,38 +75,9 @@ Puis ouvrez votre navigateur Windows :
 (Exemple : http://notes.192.168.49.2.nip.io)
 
 
-## Test rapide en local (bonus)
+## Test rapide en local
 
 ```bash
 docker compose up --build
 # → http://localhost
 ```
-
-## Vérifications
-
-```bash
-kubectl get all -n notes
-kubectl get ingress -n notes
-```
-
-## Nettoyage complet
-
-```bash
-minikube delete
-# ou
-kubectl delete namespace notes
-```
-
-## Livrables rendus
-- Repo Git complet (ce projet)
-- Playbook Ansible 100 % fonctionnel (`ansible/site.yml`)
-- Ingress fonctionnel avec `notes.xxx.nip.io`
-- Capture d’écran de l’application en fonctionnement
-- Rapport PDF (architecture, outils, étapes)
-
-## Auteur
-**EZIAN KODJO ROBERT** – S9 2025  
-Module : **DevOps – Conteneurisation & Orchestration**  
-Enseignant : **Pr. EL MENDILI**
-
-**Projet entièrement automatisé, reproductible et opérationnel à 100 %.**
