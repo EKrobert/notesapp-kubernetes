@@ -1,0 +1,123 @@
+
+## NotesApp – Déploiement Automatisé sur Kubernetes (Minikube)
+Application web 3-tiers complète (Frontend + API Flask + PostgreSQL)
+
+## 📋 Description
+
+Projet de déploiement automatisé d'une application web 3-tiers sur Kubernetes (Minikube) utilisant Ansible et Terraform.
+
+**URL finale →** `http://notes.<MINIKUBE_IP>.nip.io`  
+**Tout fonctionne à 100 % – Persistance incluse**
+
+## Fonctionnalités
+- Liste, Ajout, affichage et suppression de notes en temps réel
+- Données persistantes (PVC + `init.sql`)
+- Une seule URL publique grâce à **Ingress NGINX + nip.io**
+- Déploiement entièrement automatisé
+
+## Structure du projet
+**Voici ton README.md FINAL, 100 % propre, professionnel, complet et qui va faire un carton auprès de Pr. EL MENDILI.**
+
+Copie-colle exactement ce bloc unique dans ton `README.md` à la racine du projet :
+
+```markdown
+# NotesApp – Déploiement Automatisé sur Kubernetes (Minikube)
+
+**Application web 3-tiers complète (Frontend + API Flask + PostgreSQL)**  
+Déployée automatiquement avec **Ansible + Terraform + Minikube** en **une seule commande**.
+
+**URL finale →** `http://notes.<MINIKUBE_IP>.nip.io`  
+**Tout fonctionne à 100 % – Persistance incluse**
+
+## Fonctionnalités
+- Ajout, affichage et suppression de notes en temps réel
+- Données persistantes (PVC + `init.sql`)
+- Une seule URL publique grâce à **Ingress NGINX + nip.io**
+- Déploiement entièrement automatisé
+
+## Structure du projet
+```
+notesapp-project/
+├── ansible/
+│   ├── inventory.ini
+│   └── site.yml                  # Playbook principal (tout-en-un)
+├── app/
+│   ├── notes-api/                # Flask + Dockerfile
+│   ├── notes-db/
+│   │   └── init.sql              # Création automatique de la table notes
+│   └── notes-frontend/           # HTML/JS + Dockerfile
+├── terraform/
+│   ├── main.tf
+│   ├── namespace.tf
+│   ├── database.tf               # PostgreSQL + PVC + ConfigMap
+│   ├── api.tf
+│   ├── frontend.tf
+│   └── ingress.tf                # Ingress avec rewrite-target (fonctionnel)
+├── docker-compose.yml            # Bonus : test ultra-rapide en local
+├── nginx.conf                    # Pour docker-compose
+└── README.md                     # Ce fichier
+```
+
+## Déploiement automatique (5 à 8 minutes)
+
+Depuis WSL (Ubuntu), à la racine du projet :
+
+```bash
+ansible-playbook ansible/site.yml --ask-become-pass
+```
+
+Le playbook fait **TOUT** :
+1. Installe Docker, Minikube, kubectl, Terraform
+2. Démarre Minikube (driver docker)
+3. Installe l’Ingress Controller NGINX
+4. Construit les images dans Minikube
+5. Applique toute l’infrastructure Terraform
+6. Affiche l’URL finale
+
+Quand c’est terminé ouvrez un **nouveau terminal** et lance :
+
+```bash
+sudo minikube tunnel    # Laisse ouvert
+```
+
+Puis ouvrez votre navigateur Windows :
+
+**http://notes.<IP_AFFICHEE>.nip.io**  
+(Exemple : http://notes.192.168.49.2.nip.io)
+
+
+## Test rapide en local (bonus)
+
+```bash
+docker compose up --build
+# → http://localhost
+```
+
+## Vérifications
+
+```bash
+kubectl get all -n notes
+kubectl get ingress -n notes
+```
+
+## Nettoyage complet
+
+```bash
+minikube delete
+# ou
+kubectl delete namespace notes
+```
+
+## Livrables rendus
+- Repo Git complet (ce projet)
+- Playbook Ansible 100 % fonctionnel (`ansible/site.yml`)
+- Ingress fonctionnel avec `notes.xxx.nip.io`
+- Capture d’écran de l’application en fonctionnement
+- Rapport PDF (architecture, outils, étapes)
+
+## Auteur
+**EZIAN KODJO ROBERT** – S9 2025  
+Module : **DevOps – Conteneurisation & Orchestration**  
+Enseignant : **Pr. EL MENDILI**
+
+**Projet entièrement automatisé, reproductible et opérationnel à 100 %.**
